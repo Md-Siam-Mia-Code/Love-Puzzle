@@ -227,13 +227,61 @@ function reloadPuzzle() {
 randomizeImage();
 
 // Event listeners for mobile-specific functionality
-document.querySelectorAll('#puzz i').forEach(element => {
-    element.addEventListener('mousedown', () => {
+document.querySelectorAll('#puz i').forEach(element => {
+    let offsetX, offsetY, isDragging = false;
+
+    element.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        offsetX = touch.clientX - element.offsetLeft;
+        offsetY = touch.clientY - element.offsetTop;
+        isDragging = true;
+        element.style.zIndex = 1000; // Bring the element to the front
+    });
+
+    element.addEventListener('touchmove', (e) => {
+        if (isDragging) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            element.style.left = touch.clientX - offsetX + 'px';
+            element.style.top = touch.clientY - offsetY + 'px';
+        }
+    });
+
+    element.addEventListener('touchend', (e) => {
+        if (isDragging) {
+            isDragging = false;
+            element.style.zIndex = ''; // Reset z-index
+            const dropTarget = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+            if (dropTarget && dropTarget.classList.contains(element.classList[0])) {
+                dropTarget.classList.add('dropped');
+                element.classList.add('done');
+
+                if (document.querySelectorAll('.dropped').length === 9) {
+                    const puzzleContainer = document.querySelector('#puz');
+                    puzzleContainer.classList.add('allDone');
+                    puzzleContainer.style.border = 'none';
+                    puzzleContainer.style.animation = 'allDone 1s linear forwards';
+
+                    const ILoveYou = document.querySelector('.ILoveYou');
+                    ILoveYou.style.display = 'flex';
+                    ILoveYou.style.animation = 'ILoveYou 1s linear forwards';
+
+                    setTimeout(() => {
+                        reloadPuzzle();
+                        randomizeImage();
+                    }, 1500);
+                }
+            }
+        }
+    });
+
+    element.addEventListener('touchstart', () => {
         totalClicks++;
         document.querySelector('#clicks').innerText = totalClicks;
     });
 
-    element.addEventListener('click', () => {
+    element.addEventListener('touchend', () => {
         const clickedElement = document.querySelector('.clicked');
         if (clickedElement) clickedElement.classList.remove('clicked');
         element.classList.add('clicked');
@@ -249,7 +297,6 @@ document.querySelectorAll('#puz i').forEach(element => {
             clickedElement.classList.add('done');
             clickedElement.classList.remove('clicked');
 
-            // Check if the puzzle is completed
             if (document.querySelectorAll('.dropped').length === 9) {
                 const puzzleContainer = document.querySelector('#puz');
                 puzzleContainer.classList.add('allDone');
@@ -281,7 +328,6 @@ function drop(ev) {
         ev.target.classList.add('dropped');
         document.querySelector(`.${data}[draggable='true']`).classList.add('done');
 
-        // Check if the puzzle is completed
         if (document.querySelectorAll('.dropped').length === 9) {
             const puzzleContainer = document.querySelector('#puz');
             puzzleContainer.classList.add('allDone');
@@ -299,6 +345,7 @@ function drop(ev) {
         }
     }
 }
+
   </script>
 </body>
 
